@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.tiny.cloud/1/dnbh01g5s4vjfmmg7alsuwq6zt1ewbewcgh0tdyr2d2rqc2y/tinymce/7/tinymce.min.js"
+            referrerpolicy="origin"></script>
+    <title>Post sample</title>
+</head>
+<body>
+<div>
+    <div class="d-flex justify-content-center">
+        <form class="w-75 h-75 mt-4 shadow" style="border: 1px solid black; padding: 41px">
+            <div class="mb-3">
+                <label for="subject" class="form-label mx-2">Subject</label>
+                <input type="text" class="form-control" id="subject" aria-describedby="emailHelp"
+                       placeholder="Subject" style="border: 1px solid black">
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label mx-2">Description</label>
+
+                <textarea class="form-control" id="description" style="height: 400px; border: 1px solid black">
+                </textarea>
+            </div>
+            <div class="mb-3">
+                <label for="img-input" class="form-label mx-2">Images</label>
+                <input class="form-control" id="img-input" type="file" multiple="multiple"
+                       style="border: 1px solid black"/>
+            </div>
+            <button type="submit" class="btn btn-primary" onclick="postSample()">Submit</button>
+        </form>
+    </div>
+</div>
+<script>
+    tinymce.init({
+        selector: 'textarea',
+        plugins: 'anchor autolink',
+        toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+    });
+    function sendDataWithFile(id) {
+        let fileInput = document.getElementById('img-input');
+        let file = fileInput.files[0];
+
+        // Create FormData object
+        let formData = new FormData();
+        formData.append('file', file); // Append file
+
+        // Send a POST request with FormData to the server
+        fetch(`http://localhost:8080/api/v1/image/${id}`, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                }
+                throw new Error('Network response was not ok.');
+            })
+            .then(data => {
+                console.log('Response:', data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+  async   function postSample() {
+        let subject = document.getElementById('subject').value;
+        let description = tinyMCE.activeEditor.getContent();
+
+        let url ='http://localhost:8080/api/v1/agricultural_sampling/create_post?sampling_round_id=1'
+
+        try {
+            let response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    'name': subject,
+                    'content': description,
+                    'sampling_date': '2024-02-02' // TODO: FIX
+                }),
+            })
+            if (response.ok) {
+                let data = await response.json()
+                sendDataWithFile(data.id);
+                console.log(data)
+            } else {
+                console.error('Failed to fetch data:', response.status)
+            }
+
+            alert(response)
+        } catch (error) {
+            console.error('Error fetching data:', error)
+        }
+    }
+</script>
+</body>
+</html>
